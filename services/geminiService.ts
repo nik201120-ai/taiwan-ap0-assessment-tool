@@ -104,6 +104,18 @@ export const analyzeDocuments = async (files: DocumentFile[], manualApiKey?: str
         *   HK/Macau residents: Need proof of *Foreign* language (not Chinese).
         *   Look for FLPT, TOEIC, JLPT.
 
+    6.  **Policy Compliance (STRICTLY RESTRICTED)**:
+        *   **Goal**: 20 points for specific government programs.
+        *   **ACCEPTED KEYWORDS**: The Document (usually a Diploma/Certificate) MUST explicitly contain one of these phrases:
+            - "新南向產學合作專班" (New Southbound Industry-Academia)
+            - "印尼二技 2+i" (2+i Industry-Academia)
+            - "產學攜手合作僑生專班" (Industry-Academia Collaboration)
+            - "海外青年技術訓練班" (OYVAT / Haiqing Class)
+        *   **FORBIDDEN SOURCES**:
+            - Do **NOT** infer this from a "Work Permit", "Resume/CV", or "Interview Record".
+            - Do **NOT** accept a "General University Diploma" unless it specifically has the keywords above printed on it.
+            - If the document is just a standard degree without these specific keywords, return \`false\`.
+
     Return JSON matching the schema.
   `;
 
