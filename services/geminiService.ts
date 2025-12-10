@@ -64,9 +64,15 @@ const assessmentSchema: Schema = {
   required: ['chineseName', 'educationLevel', 'salaryAmount']
 };
 
-export const analyzeDocuments = async (files: DocumentFile[]): Promise<Partial<ApplicantData>> => {
-  // 自動使用環境變數中的 Key
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const analyzeDocuments = async (files: DocumentFile[], manualApiKey?: string): Promise<Partial<ApplicantData>> => {
+  // 優先使用手動輸入的 Key，否則使用環境變數
+  const apiKey = manualApiKey || process.env.API_KEY;
+  
+  if (!apiKey) {
+      throw new Error("API Key is missing. Please enter it in the top right corner.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const parts = await Promise.all(files.map(f => fileToPart(f.file)));
   

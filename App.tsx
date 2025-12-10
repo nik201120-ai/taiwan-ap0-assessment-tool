@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, FileText, Save, Calculator, CheckCircle, XCircle, User, Award, Printer, Trash2, RotateCcw } from 'lucide-react';
+import { Upload, FileText, Save, Calculator, CheckCircle, XCircle, User, Award, Printer, Trash2, RotateCcw, Key } from 'lucide-react';
 import { ApplicantData, JobType, DocumentFile, ScoringCriteria } from './types';
 import { calculateScore, initialApplicantData, generateDateLogic } from './utils/logic';
 import { analyzeDocuments } from './services/geminiService';
@@ -13,9 +13,28 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [previewFile, setPreviewFile] = useState<DocumentFile | null>(null);
   
-  // 檢查 API Key 狀態 (支援 GitHub Actions 注入或本地開發)
-  // 在預覽環境中，process.env.API_KEY 由平台自動注入
+  // 支援手動輸入 API Key
+  const [manualApiKey, setManualApiKey] = useState('');
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  
+  // 檢查是否有環境變數 Key
   const hasEnvKey = !!process.env.API_KEY;
+
+  // 如果有環境變數 Key，預設就不顯示輸入框；如果沒有，就預設顯示
+  useEffect(() => {
+      if (!hasEnvKey) {
+          setShowKeyInput(true);
+          // 嘗試從 LocalStorage 讀取上次輸入的 Key
+          const savedKey = localStorage.getItem('manual_gemini_key');
+          if (savedKey) setManualApiKey(savedKey);
+      }
+  }, [hasEnvKey]);
+
+  const handleManualKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setManualApiKey(val);
+      localStorage.setItem('manual_gemini_key', val);
+  };
 
   const [scoreResult, setScoreResult] = useState<{ total: number, breakdown: ScoringCriteria }>({
     total: 0,
@@ -58,15 +77,20 @@ function App() {
       alert('請先上傳文件');
       return;
     }
-    // 檢查是否有 Key
-    if (!hasEnvKey && !process.env.API_KEY) {
-       alert('未偵測到 API Key，請檢查 GitHub Secrets 設定或聯絡管理員。');
+
+    // 優先使用手動 Key，沒有才用系統 Key
+    const finalKey = manualApiKey || process.env.API_KEY;
+
+    if (!finalKey) {
+       alert('請輸入 Google Gemini API Key 才能開始分析。\n(請點擊右上角的 "設定 API Key")');
+       setShowKeyInput(true);
        return;
     }
 
     setIsAnalyzing(true);
     try {
-      const result = await analyzeDocuments(files);
+      // 將 Key 傳入 Service
+      const result = await analyzeDocuments(files, finalKey);
       setData(prev => {
         const dates = generateDateLogic();
         return {
@@ -130,12 +154,30 @@ function App() {
             <FileText className="w-6 h-6 text-blue-400" />
             <h1 className="text-xl font-bold">外籍專才評點制 (AP0) 評估系統</h1>
           </div>
-          <div className="flex items-center gap-4">
-            {hasEnvKey ? (
-               <span className="text-xs bg-green-800 text-green-100 px-2 py-1 rounded">系統 Key 已載入 (Protected)</span>
-            ) : (
-               <span className="text-xs bg-red-800 text-red-100 px-2 py-1 rounded">未設定 GitHub Secret</span>
-            )}
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            
+            {/* API Key Input Area */}
+            <div className="flex items-center gap-2 bg-slate-700 p-1.5 rounded-lg border border-slate-600">
+                {showKeyInput ? (
+                    <div className="flex items-center gap-2">
+                         <Key size={14} className="text-yellow-400"/>
+                         <input 
+                            type="password" 
+                            placeholder="輸入 Gemini API Key" 
+                            className="bg-slate-800 text-white text-xs px-2 py-1 rounded border border-slate-600 w-40 focus:w-64 transition-all focus:outline-none focus:border-blue-400"
+                            value={manualApiKey}
+                            onChange={handleManualKeyChange}
+                         />
+                         <button onClick={() => setShowKeyInput(false)} className="text-xs text-slate-400 hover:text-white">收起</button>
+                    </div>
+                ) : (
+                    <button onClick={() => setShowKeyInput(true)} className="flex items-center gap-1 text-xs text-slate-300 hover:text-white px-2">
+                        {hasEnvKey ? <span className="text-green-400">● 系統 Key 已就緒</span> : <span className="text-red-400">● 未設定 Key</span>}
+                        <span className="opacity-50">| 點此設定</span>
+                    </button>
+                )}
+            </div>
+
             <div className="flex gap-2">
                <label className="bg-slate-600 hover:bg-slate-500 px-3 py-1.5 rounded cursor-pointer text-sm flex items-center gap-1"><Upload size={16} /> 載入 JSON <input type="file" className="hidden" accept=".json" onChange={handleLoadJson} /></label>
                <button onClick={handleSaveJson} className="bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded text-sm flex items-center gap-1"><Save size={16} /> 儲存</button>
