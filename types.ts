@@ -27,6 +27,7 @@ export interface ApplicantData {
   employmentStart: string;
   employmentEnd: string;
 
+  // 新增 HighSchool
   educationLevel: 'Doctoral' | 'Master' | 'Bachelor' | 'Associate' | 'HighSchool' | string;
   educationEvidence: string;
   educationFileIndex: number;

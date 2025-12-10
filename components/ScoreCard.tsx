@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Image as ImageIcon } from 'lucide-react';
+import { Edit2, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { ApplicantData, DocumentFile } from '../types';
 import { calculateWowprimeSalary } from '../utils/logic';
 
@@ -69,8 +69,7 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({ title, type, data, score =
 
   const renderInput = () => {
     if (type === 'salary') {
-        const salaryNum = calculateWowprimeSalary(fields.val as string);
-        const netSalary = salaryNum > 2000 ? salaryNum - 2000 : salaryNum;
+        const netSalary = calculateWowprimeSalary(fields.val as string);
         return (
             <div className="flex flex-col gap-1">
                 <input 
@@ -78,22 +77,32 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({ title, type, data, score =
                     value={fields.val as string} 
                     onChange={(e) => updateData(fields.setVal, e.target.value)}
                     className="border p-2 rounded w-full font-bold text-lg"
-                    placeholder="例如: 34600+2000"
+                    placeholder="例如: 3-8 或 34600+2000"
                 />
                 <span className="text-xs text-slate-500">
-                    本薪 (Net): <span className="font-bold text-blue-600">{netSalary.toLocaleString()}</span> (若輸入34600+2000，系統會自動扣除全勤2000計算)
+                    本薪計算 (Net): <span className="font-bold text-blue-600">{netSalary.toLocaleString()}</span> (支援: 職級3-8, 34600+2000, 34600本薪)
                 </span>
             </div>
         )
     }
     if (type === 'education') {
+        const isHighSchool = fields.val === 'HighSchool';
         return (
-            <select className="border p-2 rounded w-full" value={fields.val as string} onChange={(e) => updateData(fields.setVal, e.target.value)}>
-                <option value="Doctoral">Doctoral (30)</option>
-                <option value="Master">Master (20)</option>
-                <option value="Bachelor">Bachelor (10)</option>
-                <option value="Associate">Associate (5)</option>
-            </select>
+            <div className="flex flex-col gap-1">
+                <select className={`border p-2 rounded w-full ${isHighSchool ? 'border-red-500 bg-red-50 text-red-700 font-bold' : ''}`} value={fields.val as string} onChange={(e) => updateData(fields.setVal, e.target.value)}>
+                    <option value="Doctoral">Doctoral (30)</option>
+                    <option value="Master">Master (20)</option>
+                    <option value="Bachelor">Bachelor (10)</option>
+                    <option value="Associate">Associate (5)</option>
+                    <option value="HighSchool">High School (0) - 學歷不符</option>
+                </select>
+                {isHighSchool && (
+                    <div className="flex items-center gap-1 text-xs text-red-600 font-bold">
+                        <AlertTriangle size={12} />
+                        <span>警示：學歷不符規定 (需副學士以上)</span>
+                    </div>
+                )}
+            </div>
         )
     }
     if (type === 'experience') {

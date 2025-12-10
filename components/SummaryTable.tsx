@@ -26,36 +26,45 @@ export const SummaryTable: React.FC<Props> = ({ data, updateData }) => {
   };
 
   const SalaryCell = () => {
-    const gross = calculateWowprimeSalary(data.salaryAmount);
-    const net = gross > 2000 ? gross - 2000 : gross; 
+    // 這裡直接顯示計算後的「本薪」
+    // logic.ts 中的 calculateWowprimeSalary 已經處理了 (1)職等 (2)+2000 (3)本薪 的邏輯
+    const netSalary = calculateWowprimeSalary(data.salaryAmount);
     
-    if (!isEditMode) return <div className="p-1 text-right">{net}</div>
+    if (!isEditMode) return <div className="p-1 text-right">{netSalary.toLocaleString()}</div>
 
     return (
       <input 
-        type="number"
+        type="text"
         className="bg-transparent p-1 focus:bg-white focus:outline-none border-b border-transparent focus:border-blue-500 rounded w-full text-right"
-        value={net}
-        onChange={(e) => {
-          const newNet = parseFloat(e.target.value);
-          const newGross = isNaN(newNet) ? 0 : newNet + 2000;
-          updateData('salaryAmount', newGross.toString());
-        }}
+        value={data.salaryAmount}
+        placeholder="輸入 3-8 或 34600+2000"
+        onChange={(e) => updateData('salaryAmount', e.target.value)}
       />
     );
   };
 
   const EducationCell = () => {
+      // 需求: 大學6 / 碩士7 / 博士8 / 副學士5
+      // 顯示: 數字 (Edit mode 顯示選單)
       if (!isEditMode) {
-         const map: Record<string, string> = { 'Doctoral': '01 (博士)', 'Master': '02 (碩士)', 'Bachelor': '03 (學士)', 'Associate': '04 (副學士)' };
-         return <div className="p-1">{map[data.educationLevel] || data.educationLevel}</div>
+         const map: Record<string, string> = { 
+             'Doctoral': '8', 
+             'Master': '7', 
+             'Bachelor': '6', 
+             'Associate': '5',
+             'HighSchool': '學歷不符'
+         };
+         const val = map[data.educationLevel] || '';
+         const isInvalid = val === '學歷不符';
+         return <div className={`p-1 ${isInvalid ? 'text-red-600 font-bold' : ''}`}>{val}</div>
       }
       return (
         <select className="bg-transparent p-1 w-full" value={data.educationLevel} onChange={(e) => updateData('educationLevel', e.target.value)}>
-            <option value="Doctoral">01 (博士)</option>
-            <option value="Master">02 (碩士)</option>
-            <option value="Bachelor">03 (學士)</option>
-            <option value="Associate">04 (副學士)</option>
+            <option value="Doctoral">8 (博士)</option>
+            <option value="Master">7 (碩士)</option>
+            <option value="Bachelor">6 (學士)</option>
+            <option value="Associate">5 (副學士)</option>
+            <option value="HighSchool">學歷不符 (高中以下)</option>
         </select>
       )
   };
@@ -87,7 +96,7 @@ export const SummaryTable: React.FC<Props> = ({ data, updateData }) => {
                 <th className="p-2 text-left border-r border-slate-200 w-[90px]">聘僱(迄)</th>
                 <th className="p-2 text-left border-r border-slate-200 w-[80px]">代碼</th>
                 <th className="p-2 text-left border-r border-slate-200 w-[100px]">職稱</th>
-                <th className="p-2 text-left border-r border-slate-200 w-[100px]">每月薪資<span className="text-[10px] block font-normal text-slate-400">不含全勤</span></th>
+                <th className="p-2 text-left border-r border-slate-200 w-[100px]">每月薪資<span className="text-[10px] block font-normal text-slate-400">本薪</span></th>
                 <th className="p-2 text-left border-r border-slate-200 min-w-[150px]">工作內容</th>
                 </tr>
             </thead>

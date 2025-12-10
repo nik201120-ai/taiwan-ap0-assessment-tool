@@ -44,15 +44,12 @@ export const initialApplicantData: ApplicantData = {
 export const calculateWowprimeSalary = (input: string): number => {
   if (!input) return 0;
   
-  // 處理 "34600+2000" 的情況: 全部加總 (36600)
-  // 後續計分邏輯會再扣除 2000 全勤，變回 34600 本薪
-  if (input.includes('+')) {
-      const parts = input.split('+').map(p => parseFloat(p.replace(/[^\d.]/g, '')));
-      return parts.reduce((acc, curr) => acc + (isNaN(curr) ? 0 : curr), 0);
-  }
-
-  // 處理 "2-4" 職級寫法
-  const levelRegex = /([23])[-](\d+)/;
+  // 優先級 1: 職等判斷 (X-X, X等X, X級X)
+  // 依據圖片: 
+  // 4級: 底薪 41,000, 級距 1,000
+  // 3級: 底薪 37,000, 級距 900 (3-8 = 43300) -> 37000 + 7*900 = 37000 + 6300 = 43300. Correct.
+  // 2級: 底薪 34,000, 級距 800 (2-3 = 35600) -> 34000 + 2*800 = 35600. Correct.
+  const levelRegex = /([234])[-等級\s]+(\d+)/;
   const match = input.match(levelRegex);
 
   if (match) {
@@ -61,16 +58,31 @@ export const calculateWowprimeSalary = (input: string): number => {
     let base = 0;
     let increment = 0;
 
-    if (level === 2) {
-      base = 33000;
-      increment = 800;
+    if (level === 4) {
+      base = 41000;
+      increment = 1000;
     } else if (level === 3) {
-      base = 35000;
+      base = 37000;
       increment = 900;
+    } else if (level === 2) {
+      base = 34000;
+      increment = 800;
     }
+    
+    // 計算方式: 底薪 + (級數-1)*級距
     return base + ((grade - 1) * increment);
   }
 
+  // 優先級 2: 薪資結構 "XXXX+2000" 或 "XXXX + 2000"
+  // 若格式為 A+B，通常 B 是全勤 2000，取 A 為本薪
+  if (input.includes('+')) {
+      const parts = input.split('+').map(p => parseFloat(p.replace(/[^\d.]/g, '')));
+      // 假設第一個數字是本薪，第二個是全勤。我們直接回傳本薪(第一個數字)。
+      // 依照需求: "34600+2000... 直接抓取 34600"
+      return isNaN(parts[0]) ? 0 : parts[0];
+  }
+
+  // 優先級 3: 純數字或 "XXXX本薪"
   const num = parseFloat(input.replace(/[^\d.]/g, ''));
   return isNaN(num) ? 0 : num;
 };
@@ -87,20 +99,19 @@ export const calculateScore = (data: ApplicantData): { total: number, breakdown:
     scholarship: 0
   };
 
-  // 1. 學歷
+  // 1. 學歷 (以最高學歷計分，高中以下 0 分)
   const eduMap: Record<string, number> = {
     'Doctoral': 30,
     'Master': 20,
     'Bachelor': 10,
-    'Associate': 5
+    'Associate': 5,
+    'HighSchool': 0
   };
   breakdown.education = eduMap[data.educationLevel] || 0;
 
-  // 2. 薪資 (扣除 2000 全勤)
-  const rawSalary = calculateWowprimeSalary(data.salaryAmount);
-  // 規則: 總額扣除 "全勤獎金" (2000)
-  const effectiveSalary = rawSalary > 2000 ? rawSalary - 2000 : rawSalary;
-
+  // 2. 薪資 (計算本薪)
+  const effectiveSalary = calculateWowprimeSalary(data.salaryAmount);
+  
   if (effectiveSalary >= 47971) breakdown.salary = 40;
   else if (effectiveSalary >= 40000) breakdown.salary = 30;
   else if (effectiveSalary >= 35000) breakdown.salary = 20;
