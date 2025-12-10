@@ -61,9 +61,6 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({ title, type, data, score =
                       <li>產學攜手合作僑生專班</li>
                       <li>海外青年技術訓練班 (二年制副學士)</li>
                   </ul>
-                  <p className="mt-2 text-red-600 font-bold border-t pt-1 border-slate-200">
-                      ※ 注意：工作證、履歷表或一般畢業證書 (未註明專班者) 無法作為證明。
-                  </p>
               </div>
           );
       }
