@@ -26,8 +26,7 @@ export const SummaryTable: React.FC<Props> = ({ data, updateData }) => {
   };
 
   const SalaryCell = () => {
-    // 這裡直接顯示計算後的「本薪」
-    // logic.ts 中的 calculateWowprimeSalary 已經處理了 (1)職等 (2)+2000 (3)本薪 的邏輯
+    // 顯示 calculateWowprimeSalary 計算後的本薪 (已處理職等換算與 +2000 扣除)
     const netSalary = calculateWowprimeSalary(data.salaryAmount);
     
     if (!isEditMode) return <div className="p-1 text-right">{netSalary.toLocaleString()}</div>
@@ -44,8 +43,7 @@ export const SummaryTable: React.FC<Props> = ({ data, updateData }) => {
   };
 
   const EducationCell = () => {
-      // 需求: 大學6 / 碩士7 / 博士8 / 副學士5
-      // 顯示: 數字 (Edit mode 顯示選單)
+      // 需求: 大學顯示 6, 碩士顯示 7, 博士顯示 8, 副學士顯示 5 (不顯示括號文字)
       if (!isEditMode) {
          const map: Record<string, string> = { 
              'Doctoral': '8', 

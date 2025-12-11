@@ -45,10 +45,10 @@ export const calculateWowprimeSalary = (input: string): number => {
   if (!input) return 0;
   
   // 優先級 1: 職等判斷 (X-X, X等X, X級X)
-  // 依據圖片: 
+  // 明年度標準: 
   // 4級: 底薪 41,000, 級距 1,000
-  // 3級: 底薪 37,000, 級距 900 (3-8 = 43300) -> 37000 + 7*900 = 37000 + 6300 = 43300. Correct.
-  // 2級: 底薪 34,000, 級距 800 (2-3 = 35600) -> 34000 + 2*800 = 35600. Correct.
+  // 3級: 底薪 37,000, 級距 900
+  // 2級: 底薪 34,000, 級距 800
   const levelRegex = /([234])[-等級\s]+(\d+)/;
   const match = input.match(levelRegex);
 
@@ -73,16 +73,14 @@ export const calculateWowprimeSalary = (input: string): number => {
     return base + ((grade - 1) * increment);
   }
 
-  // 優先級 2: 薪資結構 "XXXX+2000" 或 "XXXX + 2000"
-  // 若格式為 A+B，通常 B 是全勤 2000，取 A 為本薪
+  // 優先級 2: 薪資結構 "XXXX+2000" (扣除全勤)
   if (input.includes('+')) {
+      // split 後取第一個數字 (即本薪)
       const parts = input.split('+').map(p => parseFloat(p.replace(/[^\d.]/g, '')));
-      // 假設第一個數字是本薪，第二個是全勤。我們直接回傳本薪(第一個數字)。
-      // 依照需求: "34600+2000... 直接抓取 34600"
       return isNaN(parts[0]) ? 0 : parts[0];
   }
 
-  // 優先級 3: 純數字或 "XXXX本薪"
+  // 優先級 3: 純數字 (直接視為本薪)
   const num = parseFloat(input.replace(/[^\d.]/g, ''));
   return isNaN(num) ? 0 : num;
 };
