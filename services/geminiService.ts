@@ -104,14 +104,6 @@ export const analyzeDocuments = async (files: DocumentFile[], manualApiKey?: str
         *   HK/Macau residents: Need proof of *Foreign* language (not Chinese).
         *   Look for FLPT, TOEIC, JLPT.
 
-    6.  **Policy Compliance**:
-        *   Look for specific keywords in the diplomas or certificates:
-            - "新南向產學合作專班" (New Southbound Industry-Academia)
-            - "印尼二技 2+i" (2+i Industry-Academia)
-            - "產學攜手合作僑生專班" (Industry-Academia Collaboration)
-            - "海外青年技術訓練班" (OYVAT / Haiqing Class)
-        *   If the document mentions these programs, return true.
-
     Return JSON matching the schema.
   `;
 
